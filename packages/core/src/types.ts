@@ -3,7 +3,7 @@ export type Topic = {
   title: string;
   created: string;
   origin: string;
-  lastSeen: string;
+  last_seen: string;
   weight: number;
   participants: string[];
   evergreen: boolean;
