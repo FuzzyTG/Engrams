@@ -63,7 +63,7 @@ describe("renderOutput", () => {
       maxBytes: 2048,
     });
     assert.ok(result.startsWith("## Engrams — Active Knowledge"));
-    assert.ok(result.includes("check whether it relates to any topic below"));
+    assert.ok(result.includes("use it with confidence"));
     assert.ok(result.includes("## Test Topic"));
     assert.ok(result.includes("Topic body content."));
   });
@@ -79,6 +79,63 @@ describe("renderOutput", () => {
       result.includes(`Topics are stored at ${dir}`),
       "Header should contain the Engrams directory path",
     );
+  });
+
+  it("annotates tier 1 topics as originated", async () => {
+    writeTopic(dir, "topic.md", "My Topic", "Body here.");
+    const result = await renderOutput({
+      selectedTopics: [topic({ file: "topic.md", title: "My Topic", tier: 1 })],
+      engramsPath: dir,
+      maxBytes: 2048,
+    });
+    assert.ok(result.includes("*(You originated this topic)*"));
+    // Annotation must appear between heading and body
+    const headingIdx = result.indexOf("## My Topic");
+    const annotationIdx = result.indexOf("*(You originated this topic)*");
+    const bodyIdx = result.indexOf("Body here.");
+    assert.ok(headingIdx < annotationIdx, "Annotation must come after the heading");
+    assert.ok(annotationIdx < bodyIdx, "Annotation must come before the body");
+  });
+
+  it("annotates tier 2 topics as participated", async () => {
+    writeTopic(dir, "topic.md", "Other Topic", "Discussed stuff.");
+    const result = await renderOutput({
+      selectedTopics: [topic({ file: "topic.md", title: "Other Topic", tier: 2 })],
+      engramsPath: dir,
+      maxBytes: 2048,
+    });
+    assert.ok(result.includes("*(You participated in this discussion)*"));
+    const headingIdx = result.indexOf("## Other Topic");
+    const annotationIdx = result.indexOf("*(You participated in this discussion)*");
+    const bodyIdx = result.indexOf("Discussed stuff.");
+    assert.ok(headingIdx < annotationIdx, "Annotation must come after the heading");
+    assert.ok(annotationIdx < bodyIdx, "Annotation must come before the body");
+  });
+
+  it("renders mixed tier 1 and tier 2 topics with correct annotations", async () => {
+    writeTopic(dir, "orig.md", "Originated", "I started this.");
+    writeTopic(dir, "part.md", "Participated", "I joined this.");
+    const result = await renderOutput({
+      selectedTopics: [
+        topic({ file: "orig.md", title: "Originated", tier: 1, weight: 5 }),
+        topic({ file: "part.md", title: "Participated", tier: 2, weight: 3 }),
+      ],
+      engramsPath: dir,
+      maxBytes: 4096,
+    });
+    assert.ok(result.includes("*(You originated this topic)*"));
+    assert.ok(result.includes("*(You participated in this discussion)*"));
+  });
+
+  it("header instructs agent not to hedge or defer", async () => {
+    writeTopic(dir, "topic.md", "Test Topic", "Body.");
+    const result = await renderOutput({
+      selectedTopics: [topic()],
+      engramsPath: dir,
+      maxBytes: 2048,
+    });
+    assert.ok(result.includes("Do not hedge"));
+    assert.ok(result.includes("don't defer to other agents"));
   });
 
   it("renders multiple topics in order", async () => {
@@ -106,7 +163,7 @@ describe("renderOutput", () => {
         topic({ file: "low.md", title: "Low", weight: 1 }),
       ],
       engramsPath: dir,
-      maxBytes: 600,
+      maxBytes: 900,
     });
     assert.ok(result.includes("## High"));
     assert.ok(!result.includes("## Low"));
@@ -118,10 +175,10 @@ describe("renderOutput", () => {
     const result = await renderOutput({
       selectedTopics: [topic({ file: "big.md", title: "Big" })],
       engramsPath: dir,
-      maxBytes: 600,
+      maxBytes: 900,
     });
     assert.ok(result.includes("## Big"));
-    assert.ok(Buffer.byteLength(result, "utf-8") <= 600);
+    assert.ok(Buffer.byteLength(result, "utf-8") <= 900);
   });
 
   it("returns empty string when topic file does not exist", async () => {
@@ -174,7 +231,7 @@ describe("renderOutput", () => {
   it("truncates multi-byte content without exceeding byte budget", async () => {
     const body = "Hello " + "\u{1F600}".repeat(500);
     writeTopic(dir, "emoji.md", "Emoji", body);
-    const maxBytes = 600;
+    const maxBytes = 900;
     const result = await renderOutput({
       selectedTopics: [topic({ file: "emoji.md", title: "Emoji" })],
       engramsPath: dir,

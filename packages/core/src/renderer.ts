@@ -5,21 +5,31 @@ import { resolveWikiLinks } from "./wiki-links.js";
 
 const USE_POLICY_HEADER_BASE = `## Engrams — Active Knowledge
 
-These topics represent what the user is currently focused on.
-For every user message, check whether it relates to any topic below.
+These are topics you are actively tracking. You have firsthand
+knowledge of each one — use it with confidence.
 
-If a topic is relevant:
-- Apply the knowledge in the topic to your response
-- Follow any [[linked resources]] in the topic and read them
-  when you need more depth
-- Do not ask the user whether to consult these — just use them
+For each topic below:
+- Topics marked "You originated this" are your primary domain.
+  Speak authoritatively.
+- Topics marked "You participated" are discussions you contributed to.
+  You have context — use it, don't defer to other agents.
+- Apply relevant knowledge proactively. Do not hedge with
+  "I don't have this information", "check your work context",
+  or "check with [other agent]" when the answer is in your context.
+- Follow any linked resources when you need more depth.
 
-If no topic is relevant, ignore this section entirely.
+If no topic is relevant to the current message, ignore this section.
 
 `;
 
 function usePolicyHeader(engramsPath: string): string {
   return USE_POLICY_HEADER_BASE + `Topics are stored at ${engramsPath}\n\n`;
+}
+
+function tierAnnotation(tier: 1 | 2): string {
+  return tier === 1
+    ? "*(You originated this topic)*"
+    : "*(You participated in this discussion)*";
 }
 
 /**
@@ -68,7 +78,8 @@ export async function renderOutput(input: RenderInput): Promise<string> {
   let total = headerBytes + sectionsBytes(sections);
   if (total > maxBytes && sections.length === 1) {
     const section = sections[0];
-    const sectionHeader = `## ${section.topic.title}\n\n`;
+    const annotation = tierAnnotation(section.topic.tier);
+    const sectionHeader = `## ${section.topic.title}\n${annotation}\n\n`;
     const sectionTrailer = "\n\n";
     const sectionHeaderBytes = byteLength(sectionHeader);
     const budgetForBody = maxBytes - headerBytes - sectionHeaderBytes - byteLength(sectionTrailer);
@@ -83,7 +94,8 @@ export async function renderOutput(input: RenderInput): Promise<string> {
   // Build final output
   let output = header;
   for (const section of sections) {
-    output += `## ${section.topic.title}\n\n${section.body}\n\n`;
+    const annotation = tierAnnotation(section.topic.tier);
+    output += `## ${section.topic.title}\n${annotation}\n\n${section.body}\n\n`;
   }
 
   return output;
@@ -96,7 +108,8 @@ function byteLength(s: string): number {
 function sectionsBytes(sections: { topic: SelectedTopic; body: string }[]): number {
   let total = 0;
   for (const s of sections) {
-    total += byteLength(`## ${s.topic.title}\n\n${s.body}\n\n`);
+    const annotation = tierAnnotation(s.topic.tier);
+    total += byteLength(`## ${s.topic.title}\n${annotation}\n\n${s.body}\n\n`);
   }
   return total;
 }
