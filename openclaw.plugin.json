@@ -18,7 +18,6 @@
         "default": 3,
         "description": "Maximum number of topics to inject"
       }
-    },
-    "required": ["path"]
+    }
   }
 }
