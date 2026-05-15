@@ -57,6 +57,15 @@ mkdir -p "$CORE_DEST/dist"
 cp "$CORE_SRC/package.json" "$CORE_DEST/package.json"
 cp -r "$CORE_SRC/dist/src" "$CORE_DEST/dist/src"
 
+# ── 5b. Stage engrams-rebuild CLI wrapper ────────────────────────────────────
+cat > "$STAGE_DIR/engrams-rebuild" << 'REBUILD_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec node "$SCRIPT_DIR/node_modules/@engrams/core/dist/src/cli.js" "$@"
+REBUILD_EOF
+chmod +x "$STAGE_DIR/engrams-rebuild"
+
 # ── 6. Stage a minimal package.json for module resolution ─────────────────────
 node -e "
 const pkg = require('$PACKAGE_DIR/package.json');
