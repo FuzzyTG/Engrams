@@ -68,6 +68,19 @@ describe("renderOutput", () => {
     assert.ok(result.includes("Topic body content."));
   });
 
+  it("includes Engrams path in the use policy header", async () => {
+    writeTopic(dir, "topic.md", "Test Topic", "Topic body content.");
+    const result = await renderOutput({
+      selectedTopics: [topic()],
+      engramsPath: dir,
+      maxBytes: 2048,
+    });
+    assert.ok(
+      result.includes(`Topics are stored at ${dir}`),
+      "Header should contain the Engrams directory path",
+    );
+  });
+
   it("renders multiple topics in order", async () => {
     writeTopic(dir, "first.md", "First", "First body.");
     writeTopic(dir, "second.md", "Second", "Second body.");
@@ -130,8 +143,9 @@ describe("renderOutput", () => {
       engramsPath: dir,
       maxBytes: 2048,
     });
-    assert.ok(result.includes(linkedFile));
+    assert.ok(result.includes("(see: Linked)"));
     assert.ok(!result.includes("[[linked.md]]"));
+    assert.ok(!result.includes(linkedFile), "Should not contain absolute path of linked file");
   });
 
   it("strips frontmatter from topic body", async () => {

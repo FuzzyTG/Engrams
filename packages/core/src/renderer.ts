@@ -3,7 +3,7 @@ import type { RenderInput, SelectedTopic } from "./types.js";
 import { parseTopic } from "./parser.js";
 import { resolveWikiLinks } from "./wiki-links.js";
 
-const USE_POLICY_HEADER = `## Engrams — Active Knowledge
+const USE_POLICY_HEADER_BASE = `## Engrams — Active Knowledge
 
 These topics represent what the user is currently focused on.
 For every user message, check whether it relates to any topic below.
@@ -17,6 +17,10 @@ If a topic is relevant:
 If no topic is relevant, ignore this section entirely.
 
 `;
+
+function usePolicyHeader(engramsPath: string): string {
+  return USE_POLICY_HEADER_BASE + `Topics are stored at ${engramsPath}\n\n`;
+}
 
 /**
  * Render selected topics into a context block string.
@@ -46,7 +50,8 @@ export async function renderOutput(input: RenderInput): Promise<string> {
 
   if (sections.length === 0) return "";
 
-  const headerBytes = byteLength(USE_POLICY_HEADER);
+  const header = usePolicyHeader(engramsPath);
+  const headerBytes = byteLength(header);
 
   // Drop lowest-ranked topics (from the end) until we fit
   while (sections.length > 0) {
@@ -76,7 +81,7 @@ export async function renderOutput(input: RenderInput): Promise<string> {
   }
 
   // Build final output
-  let output = USE_POLICY_HEADER;
+  let output = header;
   for (const section of sections) {
     output += `## ${section.topic.title}\n\n${section.body}\n\n`;
   }
