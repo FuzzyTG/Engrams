@@ -4,6 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { injectEngramsContext } from "../src/bootstrap.js";
+import handler from "../hooks/engrams/handler.js";
 import type { BootstrapContext } from "../src/bootstrap.js";
 
 function writeTopicFile(
@@ -79,6 +80,45 @@ describe("injectEngramsContext", () => {
     assert.equal(context.bootstrapFiles![0].path, "ENGRAMS_CONTEXT.md");
     assert.ok(context.bootstrapFiles![0].content.includes("Topic A"));
     assert.ok(context.bootstrapFiles![0].content.includes("Body of topic A."));
+  });
+
+  it("handler updates the original event context bootstrapFiles", async () => {
+    writeTopicFile(dir, "topic-a.md", "Topic A", "Body of topic A.");
+    writeIndex(dir, [
+      {
+        file: "topic-a.md",
+        title: "Topic A",
+        weight: 3,
+        origin: "test-agent",
+        last_seen: "2026-05-14",
+        participants: ["test-agent"],
+        evergreen: false,
+      },
+    ]);
+
+    const event = {
+      type: "agent",
+      action: "bootstrap",
+      context: {
+        agentId: "test-agent",
+        bootstrapFiles: [] as Array<{ path: string; content: string }>,
+        cfg: {
+          plugins: {
+            entries: {
+              engrams: {
+                config: { path: dir },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    await handler(event);
+
+    assert.equal(event.context.bootstrapFiles.length, 1);
+    assert.equal(event.context.bootstrapFiles[0].path, "ENGRAMS_CONTEXT.md");
+    assert.ok(event.context.bootstrapFiles[0].content.includes("Topic A"));
   });
 
   it("returns false when no topics match the agent", async () => {

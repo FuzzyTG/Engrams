@@ -28,11 +28,5 @@ export default async function handler(event: HookEvent): Promise<void> {
 
   const pluginConfig = resolvePluginConfig(event);
 
-  await injectEngramsContext(
-    {
-      bootstrapFiles: context.bootstrapFiles,
-      agentId: context.agentId,
-    },
-    pluginConfig,
-  );
+  await injectEngramsContext(context, pluginConfig);
 }
