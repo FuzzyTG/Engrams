@@ -154,17 +154,20 @@ fi
 "$OPENCLAW_BIN" hooks install "$ARTIFACT_DIR"
 
 if ! "$OPENCLAW_BIN" plugins install "$ARTIFACT_DIR" 2>/dev/null; then
-  echo "Plugin install failed; rolling back hooks..." >&2
-  "$OPENCLAW_BIN" hooks disable engrams || true
-  rm -rf "$OPENCLAW_HOME/hooks/engrams"
-  rm -rf "$OPENCLAW_HOME/extensions/engrams"
-  exit 1
-fi
-
-# plugins install copies files but does not add to allowlist or enable;
-# plugins enable handles both
-if ! "$OPENCLAW_BIN" plugins enable engrams 2>/dev/null; then
-  echo "Warning: could not auto-enable plugin. Enable manually: openclaw plugins enable engrams" >&2
+  echo "Recovering from known OpenClaw install ordering issue..."
+  if "$OPENCLAW_BIN" plugins enable engrams 2>/dev/null; then
+    echo "Plugin enabled successfully."
+  else
+    echo "Plugin install failed; rolling back hooks..." >&2
+    "$OPENCLAW_BIN" hooks disable engrams || true
+    rm -rf "$OPENCLAW_HOME/hooks/engrams"
+    rm -rf "$OPENCLAW_HOME/extensions/engrams"
+    exit 1
+  fi
+else
+  if ! "$OPENCLAW_BIN" plugins enable engrams 2>/dev/null; then
+    echo "Warning: could not auto-enable plugin. Enable manually: openclaw plugins enable engrams" >&2
+  fi
 fi
 
 # Prompt for Engrams path
