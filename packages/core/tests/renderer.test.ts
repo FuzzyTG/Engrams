@@ -138,6 +138,21 @@ describe("renderOutput", () => {
     assert.ok(result.includes("don't defer to other agents"));
   });
 
+  it("header requires linked card reads before claiming insufficient detail", async () => {
+    writeFileSync(join(dir, "linked.md"), "---\ntitle: Linked\n---\nLinked content.");
+    writeTopic(dir, "topic.md", "Test Topic", "See [[linked.md]] for details.");
+    const result = await renderOutput({
+      selectedTopics: [topic()],
+      engramsPath: dir,
+      maxBytes: 2048,
+    });
+    assert.ok(result.includes("MUST read the linked reference card before answering"));
+    assert.ok(result.includes("do not say you lack enough detail until you have tried to read it"));
+    assert.ok(result.includes("Do not ask the user for permission"));
+    assert.ok(result.includes(`Topics are stored at ${dir}`));
+    assert.ok(result.includes("(see: Linked — linked.md)"));
+  });
+
   it("renders multiple topics in order", async () => {
     writeTopic(dir, "first.md", "First", "First body.");
     writeTopic(dir, "second.md", "Second", "Second body.");
@@ -163,7 +178,7 @@ describe("renderOutput", () => {
         topic({ file: "low.md", title: "Low", weight: 1 }),
       ],
       engramsPath: dir,
-      maxBytes: 900,
+      maxBytes: 2048,
     });
     assert.ok(result.includes("## High"));
     assert.ok(!result.includes("## Low"));
@@ -175,10 +190,10 @@ describe("renderOutput", () => {
     const result = await renderOutput({
       selectedTopics: [topic({ file: "big.md", title: "Big" })],
       engramsPath: dir,
-      maxBytes: 900,
+      maxBytes: 2048,
     });
     assert.ok(result.includes("## Big"));
-    assert.ok(Buffer.byteLength(result, "utf-8") <= 900);
+    assert.ok(Buffer.byteLength(result, "utf-8") <= 2048);
   });
 
   it("returns empty string when topic file does not exist", async () => {
@@ -231,12 +246,14 @@ describe("renderOutput", () => {
   it("truncates multi-byte content without exceeding byte budget", async () => {
     const body = "Hello " + "\u{1F600}".repeat(500);
     writeTopic(dir, "emoji.md", "Emoji", body);
-    const maxBytes = 900;
+    const maxBytes = 2048;
     const result = await renderOutput({
       selectedTopics: [topic({ file: "emoji.md", title: "Emoji" })],
       engramsPath: dir,
       maxBytes,
     });
+    assert.ok(result.includes("## Emoji"));
+    assert.ok(result.includes("Hello"));
     assert.ok(Buffer.byteLength(result, "utf-8") <= maxBytes);
   });
 

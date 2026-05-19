@@ -7,6 +7,8 @@ import { injectEngramsContext } from "../src/bootstrap.js";
 import handler from "../hooks/engrams/handler.js";
 import type { BootstrapContext } from "../src/bootstrap.js";
 
+const RECENT_DATE = new Date().toISOString().slice(0, 10);
+
 function writeTopicFile(
   dir: string,
   filename: string,
@@ -16,7 +18,7 @@ function writeTopicFile(
 ): void {
   const fields = {
     origin: "test-agent",
-    last_seen: "2026-05-14",
+    last_seen: RECENT_DATE,
     weight: 3,
     participants: "[test-agent]",
     evergreen: false,
@@ -62,7 +64,7 @@ describe("injectEngramsContext", () => {
         title: "Topic A",
         weight: 3,
         origin: "test-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["test-agent"],
         evergreen: false,
       },
@@ -90,7 +92,7 @@ describe("injectEngramsContext", () => {
         title: "Topic A",
         weight: 3,
         origin: "test-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["test-agent"],
         evergreen: false,
       },
@@ -132,7 +134,7 @@ describe("injectEngramsContext", () => {
         title: "Topic",
         weight: 3,
         origin: "other-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["other-agent"],
         evergreen: false,
       },
@@ -186,7 +188,7 @@ describe("injectEngramsContext", () => {
         title: "Init Test",
         weight: 3,
         origin: "test-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["test-agent"],
         evergreen: false,
       },
@@ -213,7 +215,7 @@ describe("injectEngramsContext", () => {
         title: `Topic ${i}`,
         weight: 5 - i,
         origin: "test-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["test-agent"],
         evergreen: false,
       })),
@@ -249,7 +251,7 @@ describe("injectEngramsContext", () => {
         title: "Dup Test",
         weight: 3,
         origin: "test-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["test-agent"],
         evergreen: false,
       },
@@ -277,7 +279,7 @@ describe("injectEngramsContext", () => {
         title: "Mut Test",
         weight: 3,
         origin: "test-agent",
-        last_seen: "2026-05-14",
+        last_seen: RECENT_DATE,
         participants: ["test-agent"],
         evergreen: false,
       },

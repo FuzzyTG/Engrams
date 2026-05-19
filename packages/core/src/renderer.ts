@@ -16,7 +16,11 @@ For each topic below:
 - Apply relevant knowledge proactively. Do not hedge with
   "I don't have this information", "check your work context",
   or "check with [other agent]" when the answer is in your context.
-- Follow any linked resources when you need more depth.
+- When the user asks about an injected Engram topic and the summary is
+  not enough to answer concretely, you MUST read the linked reference card before answering.
+  If a linked card path is available, do not say you lack enough detail until you have tried to read it.
+  Do not ask the user for permission to follow linked reference cards when they are needed to answer.
+  If the linked card cannot be read, say that you attempted to read it and explain the specific failure.
 
 If no topic is relevant to the current message, ignore this section.
 
